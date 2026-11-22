@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>牙醫診所材料庫存登記</title>
+<style>
+:root{--bg:#f6f8fb;--fg:#1d2733;--card:#fff;--line:#d9e0ea;--acc:#2f6fb5;--accfg:#fff;--warn:#fff1c2;--bad:#fbd5d0;--mute:#6b7785;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14181e;--fg:#e6ebf1;--card:#1d242d;--line:#33404f;--acc:#6aa6e8;--accfg:#10161d;--warn:#4a3e12;--bad:#512420;--mute:#9aa7b5;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14181e;--fg:#e6ebf1;--card:#1d242d;--line:#33404f;--acc:#6aa6e8;--accfg:#10161d;--warn:#4a3e12;--bad:#512420;--mute:#9aa7b5;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 "Microsoft JhengHei","PingFang TC",system-ui,sans-serif}
+main{max-width:980px;margin:0 auto;padding:12px}
+h1{font-size:20px;margin:6px 0 10px}h2{font-size:16px;margin:16px 0 6px}
+nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+nav button{flex:1;min-width:64px}
+button,select,input{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:7px 10px}
+button{cursor:pointer}button.on,button.pri{background:var(--acc);color:var(--accfg);border-color:var(--acc)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:end}.row>label{display:flex;flex-direction:column;font-size:13px;color:var(--mute);gap:2px}
+.wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:560px}th,td{border-bottom:1px solid var(--line);padding:6px;text-align:left;white-space:nowrap}th{font-size:13px;color:var(--mute)}
+td input[type=number]{width:80px}.warn{background:var(--warn)}.bad{background:var(--bad)}.mute{color:var(--mute);font-size:13px}
+textarea{width:100%;min-height:120px;font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px}
+</style></head><body><main>
+<h1>🦷 牙醫診所材料庫存登記</h1>
+<div id="app" class="mute">載入中…</div>
+</main>
+<script>
+// 預設備品：分類 → [品名, 單位, 預設安全庫存]；品名前 * ＝有效期限品項，須填批號與效期
+const CAT={
+"填充材料":[["*複合樹脂 A2","支",4],["*複合樹脂 A3","支",4],["*流動樹脂","支",3],["*黏著劑 (Bonding)","瓶",2],["*酸蝕劑","支",3],["玻璃離子水門汀","組",2],["暫時填充材","罐",2],["拋光條","包",3],["咬合紙","盒",3],["牙間楔子","盒",3],["成形片","盒",2]],
+"麻醉藥":[["*局部麻醉藥(卡局式)","盒",6],["*表面麻醉劑","罐",2],["麻醉針頭 27G","盒",3],["麻醉針頭 30G","盒",3]],
+"根管材料":[["*次氯酸鈉沖洗液","瓶",3],["*EDTA 凝膠","支",2],["K-file 根管銼針","盒",4],["旋轉鎳鈦銼針","盒",3],["牙膠尖","盒",4],["紙尖","盒",4],["*根管封填劑","組",2],["*氫氧化鈣","支",2],["根管沖洗針頭","盒",3],["橡皮障","盒",2]],
+"印模與補綴":[["*藻酸鹽印模材","包",6],["*矽膠印模材","組",3],["咬合記錄矽膠","組",2],["拋棄式印模托盤","包",3],["暫時冠材料","組",2],["*暫時黏著水門汀","組",2],["*永久黏著劑","組",2]],
+"牙科耗材":[["高速手機鑽針","盒",4],["低速手機鑽針","盒",3],["拋光杯","盒",3],["拋光膏","罐",3],["超音波洗牙頭","支",3],["洗牙膏","罐",4],["*氟化物塗劑","盒",2]],
+"外科與牙周":[["縫線 3-0","盒",3],["縫線 4-0","盒",3],["手術刀片 #15","盒",3],["手術刀片 #11","盒",2],["止血海綿","盒",3],["無菌生理食鹽水","瓶",10],["手術鋪巾","包",3],["手術衣","包",3],["無菌手套","盒",4],["拋棄式沖洗針筒","盒",3],["植牙備洞鑽","組",2]],
+"植牙與骨材":[["植體（請依品牌型號另行新增）","支",4],["癒合基台","個",4],["印模柱","個",3],["骨粉","瓶",3],["可吸收膜(膜片)","片",3],["骨膜固定釘","包",1]],
+"矯正材料":[["矯正托架","組",3],["矯正弓線","包",4],["矯正橡皮圈","包",5],["矯正黏著劑","組",2],["結紮線","包",3],["矯正護蠟","盒",3],["牙間隔離器","包",2]],
+"感控用品":[["拋棄式口罩","盒",10],["外科/N95 口罩","盒",3],["檢診手套 S","盒",6],["檢診手套 M","盒",10],["檢診手套 L","盒",4],["防護面罩","個",5],["診療胸巾","包",6],["拋棄式漱口杯","包",6],["吸唾管","包",8],["手機隔離套","盒",4],["器械滅菌袋","盒",4],["*滅菌指示帶","卷",3],["*生物指示劑","盒",2],["*器械消毒浸泡液","瓶",3],["*表面消毒液","瓶",6],["*75% 酒精","瓶",6],["洗手液","瓶",4],["感染性垃圾袋","包",5],["銳器盒","個",4]],
+"一般耗材":[["棉捲","包",10],["紗布","包",10],["拋棄式口鏡","包",4],["三用噴槍頭","包",3],["X 光感測器護套","盒",3]]};
+const TR="植牙與骨材",SELF_NOTE="安全庫存為預設值，請依實際用量調整";
+const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const today=()=>new Date().toLocaleDateString("sv"),days=d=>Math.round((new Date(d)-new Date(today()))/864e5);
+let db,user,admin=false,uid,M=[],R=[],C=[],S=[],names={},tab="stock",loaded=0,msg="";
+const need=m=>/^\*/.test(m.n0||"")||m.exp||m.cat===TR;
+function calc(m){const cs=C.filter(c=>c.mid===m.id).sort((a,b)=>b.date.localeCompare(a.date)),l=cs[0],p=cs[1],rs=R.filter(r=>r.mid===m.id);
+ const sum=f=>rs.filter(f).reduce((s,r)=>s+r.qty,0);
+ return{l,stock:(l?l.qty:0)+sum(r=>!l||r.date>l.date),use:l&&p?p.qty+sum(r=>r.date>p.date&&r.date<=l.date)-l.qty:null}}
+function sub(n,set){db.collection(n).onSnapshot(s=>{set(s.docs.map(d=>({id:d.id,...d.data()})));loaded++;fetchNames();render()},e=>{msg="資料讀取失敗："+(e.message||e.code);render()})}
+async function fetchNames(){const ids=[...new Set([...R,...C].map(x=>x.by).filter(i=>i&&!(i in names)))];if(!ids.length||!user)return;try{const p=await user.profiles(ids);ids.forEach(i=>names[i]=(p[i]&&p[i].name)||"助理");render()}catch(e){ids.forEach(i=>names[i]="助理")}}
+const who=i=>names[i]||"—";
+async function put(c,data){try{await db.collection(c).add(data)}catch(e){alert("儲存失敗："+(e.message||e.code))}}
+async function upd(c,id,data){try{await db.collection(c).doc(id).update(data)}catch(e){alert("修改失敗："+(e.message||e.code))}}
+async function del(c,id){if(!admin||!confirm("確定刪除這筆紀錄？"))return;try{await db.collection(c).doc(id).delete()}catch(e){alert("刪除失敗："+(e.message||e.code))}}
+const opts=(a,v)=>a.map(x=>`<option ${x===v?"selected":""}>${esc(x)}</option>`).join("");
+const matSel=()=>Object.keys(CAT).concat([...new Set(M.map(m=>m.cat))].filter(c=>!CAT[c])).map(c=>{const l=M.filter(m=>m.cat===c).sort((a,b)=>a.name.localeCompare(b.name,"zh-Hant"));return l.length?`<optgroup label="${esc(c)}">${l.map(m=>`<option value="${m.id}">${esc(m.name)}（${esc(m.unit)}）</option>`).join("")}</optgroup>`:""}).join("");
+function render(){const a=$("#app");if(msg){a.innerHTML=`<div class="card bad">${esc(msg)}</div>`;return}
+ if(loaded<4){a.textContent="載入中…";return}
+ const tabs=[["stock","庫存"],["in","進貨"],["count","盤點"],["todo","待辦"]].concat(admin?[["admin","管理"]]:[]);
+ const ym=today().slice(0,7),notC=M.filter(m=>!C.some(c=>c.mid===m.id&&c.date.startsWith(ym)));
+ let h=`<nav>${tabs.map(t=>`<button class="${tab===t[0]?"on":""}" onclick="tab='${t[0]}';render()">${t[1]}${t[0]==="todo"&&M.length?` (${low().length})`:""}</button>`).join("")}</nav>`;
+ if(M.length&&notC.length)h+=`<div class="card warn">📋 本月（${ym}）還有 ${notC.length} 項尚未盤點，請到「盤點」分頁處理。</div>`;
+ if(!M.length)h+=`<div class="card">${admin?`材料資料是空的。<button class="pri" onclick="seed()">匯入預設備品清單（約 ${Object.values(CAT).flat().length} 項）</button><div class="mute">${SELF_NOTE}</div>`:"管理者尚未建立材料資料。"}</div>`;
+ h+=({stock,in:vin,count:vcount,todo:vtodo,admin:vadmin}[tab]||stock)();a.innerHTML=h}
+function low(){return M.filter(m=>calc(m).stock<=m.safe)}
+function stock(){let q=window.q||"";const rows=M.filter(m=>!q||(m.name+m.cat).includes(q)).sort((a,b)=>a.cat.localeCompare(b.cat,"zh-Hant")||a.name.localeCompare(b.name,"zh-Hant"));
+ return`<div class="card"><input placeholder="搜尋品名或分類" value="${esc(q)}" oninput="window.q=this.value;render();this.focus()"><div class="wrap"><table><tr><th>分類</th><th>品名</th><th>目前庫存</th><th>安全庫存</th><th>上次盤點</th><th>上月用量</th></tr>${rows.map(m=>{const c=calc(m);return`<tr class="${c.stock<0?"bad":c.stock<=m.safe?"warn":""}"><td>${esc(m.cat)}</td><td>${esc(m.name)}</td><td>${c.stock} ${esc(m.unit)}</td><td>${m.safe}</td><td>${c.l?c.l.date:"未盤點"}</td><td>${c.use==null?"—":c.use}</td></tr>`}).join("")}</table></div><div class="mute">目前庫存＝最近一次盤點數＋盤點日之後的進貨量。盤點當天的進貨視為已含在盤點數內。</div></div>`}
+function vin(){const rs=[...R].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,25),nm=id=>(M.find(m=>m.id===id)||{}).name||"（已刪除）";
+ return`<div class="card"><h2>進貨登記</h2><div class="row"><label>材料<select id="fm" onchange="hint()">${matSel()}</select></label><label>數量<input id="fq" type="number" min="1" step="1" style="width:90px"></label><label>日期<input id="fd" type="date" value="${today()}"></label><label>批號<input id="fb" style="width:120px"></label><label>效期<input id="fe" type="date"></label><button class="pri" onclick="addIn()">登記進貨</button></div><div id="fh" class="mute"></div></div>
+ <div class="card"><h2>最近進貨</h2><div class="wrap"><table><tr><th>日期</th><th>材料</th><th>數量</th><th>批號</th><th>效期</th><th>登記人</th>${admin?"<th></th>":""}</tr>${rs.map(r=>`<tr><td>${r.date}</td><td>${esc(nm(r.mid))}</td><td>${r.qty}</td><td>${esc(r.batch||"")}</td><td>${r.exp||""}</td><td>${esc(who(r.by))}</td>${admin?`<td><button onclick="del('receipts','${r.id}')">刪除</button></td>`:""}</tr>`).join("")}</table></div></div>`}
+function hint(){const m=M.find(x=>x.id===$("#fm").value);$("#fh").textContent=m&&need(m)?"此品項須填批號與效期"+(m.lic?`（許可證字號：${m.lic}）`:""):""}
+async function addIn(){const m=M.find(x=>x.id===$("#fm").value),qty=+$("#fq").value,date=$("#fd").value,batch=$("#fb").value.trim(),exp=$("#fe").value;
+ if(!m||!(qty>0)||!date)return alert("請選材料並填寫大於 0 的數量與日期");if(need(m)&&(!batch||!exp))return alert("此品項必須填寫批號與效期");
+ await put("receipts",{mid:m.id,qty,date,batch,exp,by:uid,done:false});render()}
+function vcount(){const ym=today().slice(0,7),l=[...M].sort((a,b)=>(C.some(c=>c.mid===a.id&&c.date.startsWith(ym))?1:0)-(C.some(c=>c.mid===b.id&&c.date.startsWith(ym))?1:0)||a.cat.localeCompare(b.cat,"zh-Hant"));
+ return`<div class="card"><h2>月盤點</h2><div class="mute">輸入實際數量後按「存入」。尚未盤點的排在前面。</div><div class="wrap"><table><tr><th>品名</th><th>帳面</th><th>實際數量</th><th></th><th>本月</th></tr>${l.map(m=>{const c=calc(m),done=c.l&&c.l.date.startsWith(ym);return`<tr><td>${esc(m.name)}</td><td>${c.stock} ${esc(m.unit)}</td><td><input type="number" min="0" id="c_${m.id}"></td><td><button onclick="saveC('${m.id}')">存入</button></td><td>${done?"✅ "+c.l.date:"未盤點"}</td></tr>`}).join("")}</table></div></div>`}
+async function saveC(id){const v=$("#c_"+id).value;if(v===""||+v<0)return alert("請輸入實際數量（0 或以上）");await put("counts",{mid:id,qty:+v,date:today(),by:uid});render()}
+function vtodo(){const L=low(),sug=m=>Math.max(m.safe*2-calc(m).stock,1),bySup={};L.forEach(m=>(bySup[m.sup||"（未指定供應商）"]=bySup[m.sup||"（未指定供應商）"]||[]).push(m));
+ const meth=n=>(S.find(s=>s.name===n)||{}).method||"";
+ const txt=Object.entries(bySup).map(([s,l])=>`【${s}${meth(s)?"｜"+meth(s):""}】\n`+l.map(m=>`${m.name} x ${sug(m)}${m.unit}`).join("\n")).join("\n\n");
+ const ex=R.filter(r=>r.exp&&!r.done&&days(r.exp)<=90).sort((a,b)=>a.exp.localeCompare(b.exp)),nm=id=>(M.find(m=>m.id===id)||{}).name||"（已刪除）";
+ return`<div class="card"><h2>待補貨（${L.length} 項）</h2>${L.length?`<div class="wrap"><table><tr><th>品名</th><th>目前</th><th>安全</th><th>建議叫貨</th><th>供應商</th></tr>${L.map(m=>`<tr class="warn"><td>${esc(m.name)}</td><td>${calc(m).stock}</td><td>${m.safe}</td><td>${sug(m)} ${esc(m.unit)}</td><td>${esc(m.sup||"")}</td></tr>`).join("")}</table></div><h2>叫貨文字</h2><textarea id="ot" readonly>${esc(txt)}</textarea><button class="pri" onclick="cp()">一鍵複製（貼到 LINE）</button><div class="mute">建議叫貨量＝安全庫存×2－目前庫存（至少 1），可自行調整。</div>`:"目前沒有需要補貨的品項 👍"}</div>
+ <div class="card"><h2>效期將到（90 天內）</h2>${ex.length?`<div class="wrap"><table><tr><th>材料</th><th>批號</th><th>效期</th><th>剩餘天數</th><th></th></tr>${ex.map(r=>`<tr class="${days(r.exp)<=30?"bad":"warn"}"><td>${esc(nm(r.mid))}</td><td>${esc(r.batch||"")}</td><td>${r.exp}</td><td>${days(r.exp)}</td><td><button onclick="upd('receipts','${r.id}',{done:true})">已用畢／已處理</button></td></tr>`).join("")}</table></div>`:"沒有即將到期的批次"}</div>`}
+async function cp(){const t=$("#ot");try{await navigator.clipboard.writeText(t.value);alert("已複製")}catch(e){t.select();alert("請手動複製已選取的文字")}}
+function vadmin(){return`<div class="card"><h2>供應商與叫貨方式</h2><div class="row"><label>名稱<input id="sn"></label><label>叫貨方式<select id="sm"><option>LINE</option><option>電話</option><option>網路</option></select></label><button class="pri" onclick="addS()">新增供應商</button></div><div class="mute">${S.map(s=>esc(s.name)+"（"+esc(s.method)+"）").join("、")||"尚無供應商"}</div></div>
+<div class="card"><h2>新增材料</h2><div class="row"><label>品名<input id="an"></label><label>分類<select id="ac">${opts(Object.keys(CAT))}</select></label><label>單位<input id="au" style="width:70px"></label><label>安全庫存<input id="as" type="number" min="0" style="width:80px"></label><label><span>有效期限品項</span><select id="ae"><option value="0">否</option><option value="1">是</option></select></label><button class="pri" onclick="addM()">新增</button></div></div>
+<div class="card"><h2>材料設定</h2><div class="wrap"><table><tr><th>品名</th><th>單位</th><th>安全庫存</th><th>供應商</th><th>單價</th><th>許可證字號</th><th></th></tr>${M.map(m=>`<tr><td>${esc(m.name)}</td><td>${esc(m.unit)}</td><td><input type="number" min="0" value="${m.safe}" onchange="upd('materials','${m.id}',{safe:+this.value})"></td><td><select onchange="upd('materials','${m.id}',{sup:this.value})"><option value=""></option>${opts(S.map(s=>s.name),m.sup)}</select></td><td><input type="number" min="0" style="width:80px" value="${m.price||""}" onchange="upd('materials','${m.id}',{price:+this.value})"></td><td><input style="width:130px" value="${esc(m.lic||"")}" onchange="upd('materials','${m.id}',{lic:this.value.trim()})"></td><td><button onclick="del('materials','${m.id}')">刪除</button></td></tr>`).join("")}</table></div></div>`}
+async function addS(){const n=$("#sn").value.trim();if(n)await put("suppliers",{name:n,method:$("#sm").value})}
+async function addM(){const n=$("#an").value.trim(),u=$("#au").value.trim();if(!n||!u)return alert("請填品名與單位");await put("materials",{name:n,cat:$("#ac").value,unit:u,safe:+$("#as").value||0,exp:$("#ae").value==="1",sup:"",price:0,lic:""});$("#an").value=""}
+async function seed(){if(!confirm("匯入預設備品清單？"))return;let i=0,jobs=[];for(const[c,l]of Object.entries(CAT))for(const[n,u,s]of l){jobs.push(put("materials",{name:n.replace(/^\*/,""),cat:c,unit:u,safe:s,exp:n[0]==="*",sup:"",price:0,lic:""}))}await Promise.all(jobs)}
+(async()=>{try{db=await claude.use("db");user=await claude.use("user")}catch(e){}
+ if(!db||!user){$("#app").innerHTML='<div class="card bad">此頁需登入 claude.ai 並由管理者分享連結後才能使用共用資料。</div>';return}
+ admin=(await user.canEdit())??false;uid=await user.id();
+ sub("materials",a=>M=a);sub("receipts",a=>R=a);sub("counts",a=>C=a);sub("suppliers",a=>S=a)})();
+</script></body></html>
